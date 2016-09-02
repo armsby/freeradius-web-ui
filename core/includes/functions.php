@@ -39,7 +39,7 @@ function bannedUsers() {
  * @description displays server's hostname
  */
 /*function hostname() {
-	$hostnameFile = '/proc/sys/kernel/hostname';
+	$hostnameFile = '/hostname';
 
 	if ( $handler = fopen( $hostnameFile, 'r' ) ) {
 		$hostname = trim( fgets( $handler, filesize( $hostnameFile ) ) );
@@ -53,7 +53,7 @@ function bannedUsers() {
 
 
 function hostname() {
-	$hostnameFile = '/proc/sys/kernel/hostname';
+	$hostnameFile = '/usr/local/www/freeradius-web-ui/hostname';
 	if ( $handler = fopen( $hostnameFile, "r" ) ) {
 		$hostname = trim( fread( $handler, 4096 ) );
 

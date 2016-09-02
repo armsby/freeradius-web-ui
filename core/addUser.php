@@ -1,6 +1,24 @@
 <?php
 require_once 'includes/chkLogin.php';
 
+function NTLMHash($Input) {
+        // Convert the password from UTF8 to UTF16 (little endian)
+        $Input=iconv('UTF-8','UTF-16LE',$Input);
+
+        // Encrypt it with the MD4 hash
+        $MD4Hash=bin2hex(mhash(MHASH_MD4,$Input));
+
+        // You could use this instead, but mhash works on PHP 4 and 5 or above
+        // The hash function only works on 5 or above
+        //$MD4Hash=hash('md4',$Input);
+
+        // Make it uppercase, not necessary, but it's common to do so with NTLM hashes
+        $NTLMHash=strtoupper($MD4Hash);
+
+        // Return the result
+        return($NTLMHash);
+}
+
 if ( ! isset( $_SERVER['HTTP_X_REQUESTED_WITH'] ) ) {
 	exit;
 }
@@ -19,7 +37,7 @@ if ( empty( $_POST['fullname'] ) || empty( $_POST['username'] ) || empty( $_POST
 	$passwordType = $_POST['passwordType'];
 	require_once 'includes/class.RandomPassword.php';
 
-	$op            = ':==';
+	$op            = ':=';
 	$Password      = new RandomPassword();
 	$plainPassword = $Password->getPassword();
 
@@ -32,6 +50,16 @@ if ( empty( $_POST['fullname'] ) || empty( $_POST['username'] ) || empty( $_POST
 		$password  = sha1( $plainPassword );
 		$attribute = 'SHA-Password';
 	}
+	
+	if ( $passwordType == 'Cleartext' ) {
+                $password  = $plainPassword;
+                $attribute = 'Cleartext-Password';
+        }
+
+	 if ( $passwordType == 'NTLM' ) {
+                $password  = NTLMHash($plainPassword);
+                $attribute = 'NT-Password';
+        }
 }
 
 if ( ! filter_var( $email, FILTER_VALIDATE_EMAIL ) ) {
@@ -63,7 +91,7 @@ if ( $chkEmail->rowCount() == 1 ) {
 	exit;
 }
 
-$registerUser = $link->prepare( 'INSERT INTO radcheck(username, attribute, op, value, fullname, email)  VALUES(:username, :attribute, :op, :password,:fullname,:email)' );
+$registerUser = $link->prepare( 'INSERT INTO radcheck(username, attribute, op, value, fullname, email)  VALUES(:username, :attribute, :op, :password, :fullname, :email)' );
 
 $registerUser->bindParam( ':username', $username );
 $registerUser->bindParam( ':attribute', $attribute );
